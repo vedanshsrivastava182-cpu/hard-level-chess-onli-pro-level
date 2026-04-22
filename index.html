@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Vedansh AI Chess</title>
+
+<style>
+body {
+  background: #111;
+  color: white;
+  text-align: center;
+  font-family: Arial;
+}
+
+#board {
+  width: 320px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: repeat(8, 40px);
+  box-shadow: 0 0 20px #00ffcc;
+}
+
+.square {
+  width: 40px;
+  height: 40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  cursor:pointer;
+}
+
+.white { background:#eee; color:black; }
+.black { background:#444; }
+
+</style>
+</head>
+
+<body>
+
+<h1>♟️ Vedansh AI Chess</h1>
+
+<div id="board"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
+
+<script>
+
+let game = new Chess();
+let selected = null;
+
+const board = document.getElementById("board");
+
+// 🎤 Voice
+function speak(text){
+  let s = new SpeechSynthesisUtterance(text);
+  s.lang = "hi-IN";
+  speechSynthesis.speak(s);
+}
+
+// 🤖 AI Move (thoda smart random)
+function aiMove(){
+  let moves = game.moves({ verbose:true });
+
+  if(moves.length === 0) return;
+
+  // capture move prefer
+  let captureMoves = moves.filter(m => m.captured);
+  let move = captureMoves.length > 0 
+    ? captureMoves[Math.floor(Math.random()*captureMoves.length)]
+    : moves[Math.floor(Math.random()*moves.length)];
+
+  game.move(move);
+
+  // 🧠 AI बोलना
+  let msg = "Maine move kar diya 😎";
+
+  if(move.captured){
+    msg = "Haha! Maine tumhara piece le liya 😏";
+  }
+  if(game.in_check()){
+    msg = "Check! Ab bach ke dikhao 🔥";
+  }
+  if(game.in_checkmate()){
+    msg = "Checkmate! Bola tha na mujhe harana aasan nahi 😎";
+  }
+
+  speak(msg);
+
+  render();
+}
+
+// 🎮 Render
+function render(){
+  board.innerHTML = "";
+
+  let squares = game.board();
+
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+
+      let sq = document.createElement("div");
+      sq.className = "square " + ((r+c)%2==0?"white":"black");
+
+      let piece = squares[r][c];
+      if(piece){
+        sq.innerText = piece.type;
+      }
+
+      sq.onclick = ()=>clickSquare(r,c);
+
+      board.appendChild(sq);
+    }
+  }
+}
+
+// 🖱️ Click
+function clickSquare(r,c){
+  let square = "abcdefgh"[c] + (8-r);
+
+  if(!selected){
+    selected = square;
+    return;
+  }
+
+  let move = game.move({
+    from: selected,
+    to: square,
+    promotion: "q"
+  });
+
+  if(move === null){
+    speak("Galat move! Rules follow karo 😏");
+  } else {
+
+    // 🎤 Player move pe reply
+    let msg = "Achha move 👍";
+
+    if(move.captured){
+      msg = "Hmm... mera piece le liya 😐";
+    }
+    if(game.in_check()){
+      msg = "Oh! Tumne check diya 😳";
+    }
+
+    speak(msg);
+
+    setTimeout(aiMove, 600);
+  }
+
+  selected = null;
+  render();
+}
+
+render();
+
+// Start voice
+speak("Welcome Vedansh AI Chess me. Mujhe harana itna aasan nahi hai 😎");
+
+</script>
+
+</body>
+</html>
